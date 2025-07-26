@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fake News Detector</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+
+    #splash {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: beige;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    #main {
+      display: none;
+      padding: 20px;
+      text-align: center;
+    }
+
+    img {
+      width: 200px;
+      animation: fadeIn 1.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      width: 80%;
+      max-width: 400px;
+      font-size: 16px;
+    }
+
+    button {
+      background: black;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div id="splash">
+  <img src="https://iili.io/FkDak1R.png" width="300px" height="200px">
+</div>
+
+<!-- Main App UI -->
+<div id="main">
+  <h1>🕵️‍♂️ Fake News Detector</h1>
+  <form action="/predict" method="post">
+    <input type="text" name="text" placeholder="Enter news text/headline" required>
+    <br>
+    <button type="submit">Check</button>
+  </form>
+</div>
+
+<!-- ✅ Script placed outside comment and properly working -->
+<script>
+  // Hide splash and redirect to login.html after 2.5 seconds
+  setTimeout(() => {
+    window.location.href = "login.html"; // Redirect to login
+  }, 2500);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Navigator - AI-Powered News Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .analysis-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .analysis-card.reliable {
+            border-left-color: #10b981;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+        
+        .analysis-card.questionable {
+            border-left-color: #f59e0b;
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+        }
+        
+        .analysis-card.unreliable {
+            border-left-color: #ef4444;
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .confidence-bar {
+            transition: width 1s ease-in-out;
+        }
+        
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        .nav-item.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                        <span class="text-2xl">🔍</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">Fake News Navigator</h1>
+                        <p class="text-blue-100 text-sm">AI-Powered News Verification</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-blue-100">Articles Analyzed Today</p>
+                        <p class="text-xl font-semibold">2,847</p>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleMenu()" class="hamburger-menu p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors">
+                            <div class="w-6 h-0.5 bg-white mb-1.5"></div>
+                            <div class="w-6 h-0.5 bg-white mb-1.5"></div>
+                            <div class="w-6 h-0.5 bg-white"></div>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border z-50">
+                            <div class="py-2">
+                                <a href="#" onclick="showPage('home')" class="nav-item flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <span class="mr-3 text-lg">🏠</span>
+                                    <span class="font-medium">Home</span>
+                                </a>
+                                
+                                <a href="#" onclick="showPage('notifications')" class="nav-item flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <span class="mr-3 text-lg">🔔</span>
+                                    <div class="flex items-center justify-between w-full">
+                                        <span class="font-medium">Notifications</span>
+                                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">3</span>
+                                    </div>
+                                </a>
+                                
+                                <a href="#" onclick="showPage('menu')" class="nav-item flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <span class="mr-3 text-lg">📋</span>
+                                    <span class="font-medium">Menu</span>
+                                </a>
+                                
+                                <a href="#" onclick="showPage('questions')" class="nav-item flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <span class="mr-3 text-lg">❓</span>
+                                    <span class="font-medium">Previous Questions</span>
+                                </a>
+                                
+                                <a href="#" onclick="showPage('settings')" class="nav-item flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <span class="mr-3 text-lg">⚙️</span>
+                                    <span class="font-medium">Settings</span>
+                                </a>
+                                
+                                <div class="border-t border-gray-100 my-2"></div>
+                                
+                                <a href="#" onclick="logout()" class="flex items-center px-4 py-3 text-red-600 hover:bg-red-50 transition-colors">
+                                    <span class="mr-3 text-lg">🚪</span>
+                                    <span class="font-medium">Logout</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-6">
+            <div class="flex items-center space-x-2 text-sm text-gray-600">
+                <span>🏠</span>
+                <span>/</span>
+                <span id="currentPage" class="font-medium text-blue-600">Home</span>
+            </div>
+        </nav>
+
+        <!-- HOME PAGE -->
+        <div id="homePage" class="page-section active">
+            <!-- Analysis Input Section -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Analyze News Article</h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Article URL or Text</label>
+                        <textarea id="articleInput" 
+                                  class="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                  placeholder="Paste article URL or full text here for AI analysis..."></textarea>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button onclick="analyzeArticle()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2">
+                            <span>🤖</span>
+                            <span>Analyze with AI</span>
+                        </button>
+                        
+                        <button onclick="clearAnalysis()" 
+                                class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Stats -->
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Today's Analyses</p>
+                            <p class="text-3xl font-bold text-blue-600">2,847</p>
+                        </div>
+                        <div class="text-4xl">📊</div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Reliability Score</p>
+                            <p class="text-3xl font-bold text-green-600">78%</p>
+                        </div>
+                        <div class="text-4xl">✅</div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Flagged Articles</p>
+                            <p class="text-3xl font-bold text-red-600">342</p>
+                        </div>
+                        <div class="text-4xl">⚠️</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Results -->
+            <div id="analysisResults" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-6">AI Analysis Results</h3>
+                    
+                    <!-- Overall Score -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-lg font-medium text-gray-700">Credibility Score</span>
+                            <span id="credibilityScore" class="text-2xl font-bold text-blue-600">--</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div id="credibilityBar" class="confidence-bar h-3 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Unreliable</span>
+                            <span>Questionable</span>
+                            <span>Reliable</span>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Analysis -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Source Analysis -->
+                        <div class="analysis-card p-6 rounded-lg" id="sourceCard">
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <span class="mr-2">📰</span>
+                                Source Analysis
+                            </h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Domain Authority:</span>
+                                    <span id="domainAuth" class="font-medium">--</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Publication History:</span>
+                                    <span id="pubHistory" class="font-medium">--</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Bias Rating:</span>
+                                    <span id="biasRating" class="font-medium">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Analysis -->
+                        <div class="analysis-card p-6 rounded-lg" id="contentCard">
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <span class="mr-2">📝</span>
+                                Content Analysis
+                            </h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Emotional Language:</span>
+                                    <span id="emotionalLang" class="font-medium">--</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Fact Density:</span>
+                                    <span id="factDensity" class="font-medium">--</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Citation Quality:</span>
+                                    <span id="citationQuality" class="font-medium">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Findings -->
+                    <div class="mt-8">
+                        <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                            <span class="mr-2">🔍</span>
+                            Key Findings
+                        </h4>
+                        <div id="keyFindings" class="space-y-3">
+                            <!-- Findings will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="mt-8 p-6 bg-blue-50 rounded-lg">
+                        <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+                            <span class="mr-2">💡</span>
+                            AI Recommendations
+                        </h4>
+                        <div id="recommendations" class="text-blue-700">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Analyses -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">Recent Analyses</h3>
+                
+                <div class="space-y-4">
+                    <div class="analysis-card reliable p-4 rounded-lg flex items-center justify-between">
+                        <div>
+                            <h5 class="font-medium text-gray-800">Climate Change Report - Scientific Journal</h5>
+                            <p class="text-sm text-gray-600">Analyzed 2 hours ago</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-green-600 font-semibold">92% Reliable</span>
+                            <p class="text-xs text-gray-500">High credibility</p>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card questionable p-4 rounded-lg flex items-center justify-between">
+                        <div>
+                            <h5 class="font-medium text-gray-800">Breaking: Miracle Cure Discovery</h5>
+                            <p class="text-sm text-gray-600">Analyzed 4 hours ago</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-yellow-600 font-semibold">34% Reliable</span>
+                            <p class="text-xs text-gray-500">Verify sources</p>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card unreliable p-4 rounded-lg flex items-center justify-between">
+                        <div>
+                            <h5 class="font-medium text-gray-800">Shocking Celebrity Scandal Exposed</h5>
+                            <p class="text-sm text-gray-600">Analyzed 6 hours ago</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-red-600 font-semibold">12% Reliable</span>
+                            <p class="text-xs text-gray-500">Likely false</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATIONS PAGE -->
+        <div id="notificationsPage" class="page-section">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">Notifications</h2>
+                    <button onclick="markAllRead()" class="text-blue-600 hover:text-blue-700 font-medium">Mark All Read</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="notification-item p-4 border-l-4 border-red-500 bg-red-50 rounded-lg">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-semibold text-red-800">High Risk Article Detected</h4>
+                                <p class="text-red-700 text-sm mt-1">Article "Miracle Weight Loss Secret" flagged with 15% credibility score</p>
+                                <p class="text-red-600 text-xs mt-2">2 minutes ago</p>
+                            </div>
+                            <button onclick="dismissNotification(this)" class="text-red-600 hover:text-red-800">✕</button>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-item p-4 border-l-4 border-yellow-500 bg-yellow-50 rounded-lg">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-semibold text-yellow-800">Analysis Complete</h4>
+                                <p class="text-yellow-700 text-sm mt-1">Your batch analysis of 50 articles has been completed</p>
+                                <p class="text-yellow-600 text-xs mt-2">1 hour ago</p>
+                            </div>
+                            <button onclick="dismissNotification(this)" class="text-yellow-600 hover:text-yellow-800">✕</button>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-item p-4 border-l-4 border-blue-500 bg-blue-50 rounded-lg">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-semibold text-blue-800">System Update</h4>
+                                <p class="text-blue-700 text-sm mt-1">New AI model v2.1 deployed with improved accuracy</p>
+                                <p class="text-blue-600 text-xs mt-2">3 hours ago</p>
+                            </div>
+                            <button onclick="dismissNotification(this)" class="text-blue-600 hover:text-blue-800">✕</button>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-item p-4 border-l-4 border-green-500 bg-green-50 rounded-lg">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-semibold text-green-800">Weekly Report Ready</h4>
+                                <p class="text-green-700 text-sm mt-1">Your weekly analysis report is available for download</p>
+                                <p class="text-green-600 text-xs mt-2">1 day ago</p>
+                            </div>
+                            <button onclick="dismissNotification(this)" class="text-green-600 hover:text-green-800">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MENU PAGE -->
+        <div id="menuPage" class="page-section">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Main Menu</h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="menu-card p-6 border rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-4xl mb-4">📊</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Analytics Dashboard</h3>
+                        <p class="text-gray-600 text-sm">View detailed analytics and trends</p>
+                    </div>
+                    
+                    <div class="menu-card p-6 border rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-4xl mb-4">📈</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Reports</h3>
+                        <p class="text-gray-600 text-sm">Generate and download reports</p>
+                    </div>
+                    
+                    <div class="menu-card p-6 border rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-4xl mb-4">🔧</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">API Settings</h3>
+                        <p class="text-gray-600 text-sm">Configure API endpoints and keys</p>
+                    </div>
+                    
+                    <div class="menu-card p-6 border rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-4xl mb-4">👥</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Team Management</h3>
+                        <p class="text-gray-600 text-sm">Manage team members and permissions</p>
+                    </div>
+                    
+                    <div class="menu-card p-6 border rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-4xl mb-4">📚</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Knowledge Base</h3>
+                        <p class="text-gray-600 text-sm">Access documentation and guides</p>
+                    </div>
+                    
+                    <div class="menu-card p-6 border rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-4xl mb-4">🎯</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Training Center</h3>
+                        <p class="text-gray-600 text-sm">Learn about fake news detection</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREVIOUS QUESTIONS PAGE -->
+        <div id="questionsPage" class="page-section">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">Previous Questions</h2>
+                    <div class="flex items-center space-x-4">
+                        <input type="text" placeholder="Search questions..." class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Search</button>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="question-item p-4 border rounded-lg hover:bg-gray-50">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">"How accurate is this news source?"</h4>
+                                <p class="text-gray-600 text-sm mt-1">Asked about: CNN.com article on climate change</p>
+                                <p class="text-gray-500 text-xs mt-2">2 hours ago • Credibility: 89%</p>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm">View Details</button>
+                        </div>
+                    </div>
+                    
+                    <div class="question-item p-4 border rounded-lg hover:bg-gray-50">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">"Can you analyze this article for bias?"</h4>
+                                <p class="text-gray-600 text-sm mt-1">Asked about: Political opinion piece</p>
+                                <p class="text-gray-500 text-xs mt-2">1 day ago • Bias Level: High</p>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm">View Details</button>
+                        </div>
+                    </div>
+                    
+                    <div class="question-item p-4 border rounded-lg hover:bg-gray-50">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">"What makes a source reliable?"</h4>
+                                <p class="text-gray-600 text-sm mt-1">General inquiry about source credibility</p>
+                                <p class="text-gray-500 text-xs mt-2">3 days ago • Educational</p>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm">View Details</button>
+                        </div>
+                    </div>
+                    
+                    <div class="question-item p-4 border rounded-lg hover:bg-gray-50">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">"How do you detect fake news?"</h4>
+                                <p class="text-gray-600 text-sm mt-1">Asked about AI detection methods</p>
+                                <p class="text-gray-500 text-xs mt-2">1 week ago • Educational</p>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS PAGE -->
+        <div id="settingsPage" class="page-section">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Settings</h2>
+                
+                <div class="space-y-8">
+                    <!-- Account Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Account Settings</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="font-medium text-gray-700">Email Notifications</label>
+                                    <p class="text-sm text-gray-600">Receive analysis alerts via email</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="font-medium text-gray-700">Push Notifications</label>
+                                    <p class="text-sm text-gray-600">Get instant alerts for high-risk content</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Analysis Settings</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block font-medium text-gray-700 mb-2">Sensitivity Level</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option>High - Flag more potential issues</option>
+                                    <option selected>Medium - Balanced approach</option>
+                                    <option>Low - Only flag obvious problems</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block font-medium text-gray-700 mb-2">Auto-Analysis</label>
+                                <div class="flex items-center space-x-4">
+                                    <label class="flex items-center">
+                                        <input type="radio" name="autoAnalysis" value="enabled" class="mr-2">
+                                        <span>Enabled</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="autoAnalysis" value="disabled" checked class="mr-2">
+                                        <span>Disabled</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Privacy Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Privacy Settings</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="font-medium text-gray-700">Data Sharing</label>
+                                    <p class="text-sm text-gray-600">Share anonymized data to improve AI models</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="font-medium text-gray-700">Analytics Tracking</label>
+                                    <p class="text-sm text-gray-600">Help us improve the platform with usage analytics</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-6 border-t">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium mr-4">Save Changes</button>
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPageId = 'home';
+
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId + 'Page').classList.add('active');
+            
+            // Update breadcrumb
+            const pageNames = {
+                'home': 'Home',
+                'notifications': 'Notifications',
+                'menu': 'Menu',
+                'questions': 'Previous Questions',
+                'settings': 'Settings'
+            };
+            document.getElementById('currentPage').textContent = pageNames[pageId];
+            
+            // Update nav item active state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Hide dropdown
+            document.getElementById('dropdownMenu').classList.add('hidden');
+            
+            currentPageId = pageId;
+        }
+
+        function toggleMenu() {
+            const dropdown = document.getElementById('dropdownMenu');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function logout() {
+            document.getElementById('dropdownMenu').classList.add('hidden');
+            if (confirm('Are you sure you want to logout?')) {
+                alert('Logging out... Goodbye!');
+            }
+        }
+
+        function markAllRead() {
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.style.opacity = '0.6';
+            });
+            alert('All notifications marked as read!');
+        }
+
+        function dismissNotification(button) {
+            button.closest('.notification-item').style.display = 'none';
+        }
+
+        function analyzeArticle() {
+            const input = document.getElementById('articleInput').value.trim();
+            if (!input) {
+                alert('Please enter an article URL or text to analyze.');
+                return;
+            }
+
+            // Show loading state
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span class="pulse-animation">🤖</span> <span>Analyzing...</span>';
+            button.disabled = true;
+
+            // Simulate AI analysis
+            setTimeout(() => {
+                showAnalysisResults();
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 3000);
+        }
+
+        function showAnalysisResults() {
+            // Generate realistic analysis results
+            const scores = generateAnalysisScores();
+            
+            // Show results section
+            document.getElementById('analysisResults').classList.remove('hidden');
+            
+            // Update credibility score
+            document.getElementById('credibilityScore').textContent = scores.overall + '%';
+            document.getElementById('credibilityBar').style.width = scores.overall + '%';
+            
+            // Update source analysis
+            document.getElementById('domainAuth').textContent = scores.domainAuth;
+            document.getElementById('pubHistory').textContent = scores.pubHistory;
+            document.getElementById('biasRating').textContent = scores.biasRating;
+            
+            // Update content analysis
+            document.getElementById('emotionalLang').textContent = scores.emotionalLang;
+            document.getElementById('factDensity').textContent = scores.factDensity;
+            document.getElementById('citationQuality').textContent = scores.citationQuality;
+            
+            // Style cards based on score
+            const sourceCard = document.getElementById('sourceCard');
+            const contentCard = document.getElementById('contentCard');
+            
+            if (scores.overall >= 70) {
+                sourceCard.classList.add('reliable');
+                contentCard.classList.add('reliable');
+            } else if (scores.overall >= 40) {
+                sourceCard.classList.add('questionable');
+                contentCard.classList.add('questionable');
+            } else {
+                sourceCard.classList.add('unreliable');
+                contentCard.classList.add('unreliable');
+            }
+            
+            // Update findings and recommendations
+            updateFindings(scores.overall);
+            updateRecommendations(scores.overall);
+            
+            // Scroll to results
+            document.getElementById('analysisResults').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateAnalysisScores() {
+            const overall = Math.floor(Math.random() * 100);
+            return {
+                overall: overall,
+                domainAuth: overall > 70 ? 'High' : overall > 40 ? 'Medium' : 'Low',
+                pubHistory: overall > 70 ? 'Established' : overall > 40 ? 'Mixed' : 'Questionable',
+                biasRating: overall > 70 ? 'Minimal' : overall > 40 ? 'Moderate' : 'High',
+                emotionalLang: overall > 70 ? 'Low' : overall > 40 ? 'Moderate' : 'High',
+                factDensity: overall > 70 ? 'High' : overall > 40 ? 'Medium' : 'Low',
+                citationQuality: overall > 70 ? 'Strong' : overall > 40 ? 'Adequate' : 'Weak'
+            };
+        }
+
+        function updateFindings(score) {
+            const findings = document.getElementById('keyFindings');
+            let findingsHTML = '';
+            
+            if (score >= 70) {
+                findingsHTML = `
+                    <div class="flex items-start space-x-3">
+                        <span class="text-green-500 mt-1">✓</span>
+                        <span class="text-gray-700">Source has strong editorial standards and fact-checking processes</span>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-green-500 mt-1">✓</span>
+                        <span class="text-gray-700">Content includes verifiable facts and credible citations</span>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-green-500 mt-1">✓</span>
+                        <span class="text-gray-700">Language is objective with minimal emotional manipulation</span>
+                    </div>
+                `;
+            } else if (score >= 40) {
+                findingsHTML = `
+                    <div class="flex items-start space-x-3">
+                        <span class="text-yellow-500 mt-1">⚠</span>
+                        <span class="text-gray-700">Source credibility is mixed - verify with additional sources</span>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-yellow-500 mt-1">⚠</span>
+                        <span class="text-gray-700">Some claims lack proper citations or verification</span>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-yellow-500 mt-1">⚠</span>
+                        <span class="text-gray-700">Moderate use of emotional or biased language detected</span>
+                    </div>
+                `;
+            } else {
+                findingsHTML = `
+                    <div class="flex items-start space-x-3">
+                        <span class="text-red-500 mt-1">✗</span>
+                        <span class="text-gray-700">Source has poor credibility or unknown reputation</span>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-red-500 mt-1">✗</span>
+                        <span class="text-gray-700">High use of emotional language and unverified claims</span>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-red-500 mt-1">✗</span>
+                        <span class="text-gray-700">Lacks credible citations and fact-based evidence</span>
+                    </div>
+                `;
+            }
+            
+            findings.innerHTML = findingsHTML;
+        }
+
+        function updateRecommendations(score) {
+            const recommendations = document.getElementById('recommendations');
+            
+            if (score >= 70) {
+                recommendations.innerHTML = 'This article appears to be from a reliable source with good editorial standards. The content is well-sourced and factual. Safe to share and reference.';
+            } else if (score >= 40) {
+                recommendations.innerHTML = 'Exercise caution with this article. Cross-reference claims with other reputable sources before sharing. Some information may be accurate but requires verification.';
+            } else {
+                recommendations.innerHTML = 'This article shows multiple red flags for misinformation. Do not share without thorough fact-checking. Consider finding alternative sources for this information.';
+            }
+        }
+
+        function clearAnalysis() {
+            document.getElementById('articleInput').value = '';
+            document.getElementById('analysisResults').classList.add('hidden');
+            
+            // Reset card styling
+            const cards = document.querySelectorAll('.analysis-card');
+            cards.forEach(card => {
+                card.classList.remove('reliable', 'questionable', 'unreliable');
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('dropdownMenu');
+            const button = event.target.closest('.hamburger-menu');
+            
+            if (!button && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96502010c45b7efe',t:'MTc1MzQ5MzM1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
